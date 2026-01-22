@@ -1,0 +1,1 @@
+scatter!(Conc, deg_J_20_1[1])
