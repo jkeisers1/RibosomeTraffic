@@ -52,8 +52,13 @@ mutable struct SimState
     
     # Observables / Counters
     flux_termination::Int
-    count_mobile::Int
+    count_active::Int
     count_paused::Int
+
+    #Observables (Time-averaged Integrals)
+    cum_active_time::Float64
+    cum_paused_time::Float64
+    cum_moving_masses::Float64
 end
 
 # Helper constructor to initialize state easily
@@ -71,6 +76,9 @@ function SimState(model::TranscriptModel)
         0.0,                    # total_rate_switch
         0,                      # flux_termination
         0,                      # count_mobile
-        0                       # count_paused
+        0,                       # count_paused
+        0.0,                    # cum_active_time
+        0.0,                    # cum_paused_time
+        0.0                     # cum_moving_masses
     )
 end

@@ -77,7 +77,7 @@ function move_ribosome!(state::SimState, model::TranscriptModel, i::Int)
         # TERMINATION EVENT (Exit)
         # ====================================================
         state.flux_termination += 1
-        state.count_mobile -= 1 
+        state.count_active -= 1 
         
         # 1. The last site `i` is now empty. Set its rate to 0.
         update_local_rates!(state, model, i)
@@ -148,6 +148,14 @@ function step!(state::SimState, model::TranscriptModel)
         return # Deadlock
     end
     dt = rand(Exponential(1.0 / a0))
+
+    # Add (Number of Particles * Duration) to the accumulator
+    state.cum_active_time += Float64(state.count_active) * dt
+    state.cum_paused_time += Float64(state.count_paused) * dt
+
+    # all particles that can move contribute to total elongation rate
+    state.cum_moving_masses += state.total_rate_elong * dt
+
     state.time += dt
     state.step_count += 1
     
@@ -159,7 +167,7 @@ function step!(state::SimState, model::TranscriptModel)
         # Place a new mobile ribosome at site 1
         state.lattice[1] = 1
         state.internal_states[1] = 1 # Mobile
-        state.count_mobile += 1
+        state.count_active += 1
         
         # The entrance is now blocked!
         state.rate_initiation = 0.0
@@ -210,12 +218,12 @@ function switch_ribosome_state!(state::SimState, model::TranscriptModel, i::Int)
     # Flip the state
     if current == 1 # Mobile -> Paused
         state.internal_states[i] = 2
-        state.count_mobile -= 1
+        state.count_active -= 1
         state.count_paused += 1
     elseif current == 2 # Paused -> Mobile
         state.internal_states[i] = 1
         state.count_paused -= 1
-        state.count_mobile += 1
+        state.count_active += 1
     end
     
     # Recalculate rates for this particle
