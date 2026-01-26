@@ -18,6 +18,7 @@ struct TranscriptModel
     # Pausing Kinetics
     k_pause::Float64        # Rate Mobile -> Paused (k₋)
     k_unpause::Float64      # Rate Paused -> Mobile (k₊)
+    delta::Float64          # mRNA degradation rate
 end
 
 """
@@ -41,6 +42,7 @@ mutable struct SimState
     # rate_elong[i]: Rate of particle at i moving to i+1
     rate_elong::Vector{Float64}
     
+    # Initiation rate (fixed)
     rate_initiation::Float64   # Rate of initiation at site 1
 
     # rate_switch[i]: Rate of particle at i switching state (Mobile <-> Paused)

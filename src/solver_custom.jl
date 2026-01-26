@@ -141,7 +141,7 @@ The main Gillespie loop step. Finds the next event and executes it.
 """
 function step!(state::SimState, model::TranscriptModel)
     # 1. Total Propensity
-    a0 = state.total_rate_elong + state.total_rate_switch + state.rate_initiation
+    a0 = state.total_rate_elong + state.total_rate_switch + state.rate_initiation + model.delta
     
     # 2. Time Step
     if a0 <= 1e-16 # Float safety for 0
@@ -162,7 +162,26 @@ function step!(state::SimState, model::TranscriptModel)
     # 3. Select Reaction Channel
     r = rand() * a0
     # --- BRANCH 1: INITIATION ---
-    if r < state.rate_initiation
+    if r < model.delta
+        # 1. Wipe the lattice (Ribosomes fall off / Abort)
+        fill!(state.lattice, 0)
+        fill!(state.internal_states, 0)
+        
+        # 2. Reset Counters (They are all gone!)
+        state.count_active = 0
+        state.count_paused = 0
+        
+        # 3. Reset Rates (Lattice is empty, so no elongation/switching)
+        fill!(state.rate_elong, 0.0)
+        fill!(state.rate_switch, 0.0)
+        state.total_rate_elong = 0.0
+        state.total_rate_switch = 0.0
+        
+        # 4. Immediate Rebirth (New mRNA is ready)
+        # The lattice is empty, so initiation is unblocked.
+        state.rate_initiation = model.α
+
+    elseif r < state.rate_initiation + model.delta
         # Execute Initiation
         # Place a new mobile ribosome at site 1
         state.lattice[1] = 1
@@ -176,9 +195,9 @@ function step!(state::SimState, model::TranscriptModel)
         update_local_rates!(state, model, 1)
         
     # --- BRANCH 2: ELONGATION ---
-    elseif r < state.rate_initiation + state.total_rate_elong
+    elseif r < state.rate_initiation + state.total_rate_elong + model.delta
         # Shift r to be relative to the elongation block
-        r_elong = r - state.rate_initiation
+        r_elong = r - (state.rate_initiation + model.delta)
         cumulative = 0.0
         selected_site = 0
         for i in 1:model.L
@@ -195,7 +214,7 @@ function step!(state::SimState, model::TranscriptModel)
         
     else
         # --- SWITCHING ---
-        r_switch = r - (state.total_rate_elong + state.rate_initiation)
+        r_switch = r - (state.total_rate_elong + state.rate_initiation + model.delta)
         cumulative = 0.0
         selected_site = 0
         for i in 1:model.L
