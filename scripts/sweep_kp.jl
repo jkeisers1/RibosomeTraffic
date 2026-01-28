@@ -24,11 +24,11 @@ using RibosomeTraffic # Now Main knows what TranscriptModel is
 CONSTANTS = Dict(
     :L          => 1000,
     :l_rib      => 10,
-    :alpha      => 0.6,
+    :alpha      => 0.02,
     :beta       => 1.0,
-    :k_unpause  => 0.1,
+    :k_unpause  => 0.0014,
     :lifetime   => 300.0,
-    :t_max      => 10^5,
+    :t_max      => 1.0 * 10^5,
     :repeats    => 4
 )
 
