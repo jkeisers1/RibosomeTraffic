@@ -1,0 +1,2 @@
+batch_id,date,description,sweep_var,sweep_range,L,alpha,beta,k_unpause,lifetime,repeats
+b545e7d2,2026-01-28 11:26,Sweep_k_pause_0.0_to_0.5_a0.6,k_pause,0.0 -> 0.5,1000,0.6,1.0,0.1,300.0,4

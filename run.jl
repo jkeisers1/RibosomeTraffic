@@ -30,7 +30,7 @@ model = TranscriptModel(L, l_ribosome, α, β, k_elong, k_pause, k_unpause, delt
 t_bench = 100.0
 println("--- Running Simulation (t_max = $t_bench s) ---")
 
-@btime state = run_custom_simulation(model, t_bench)
+@time state = run_custom_simulation(model, t_bench)
 
 # ==========================================
 # 3. ANALYSIS
