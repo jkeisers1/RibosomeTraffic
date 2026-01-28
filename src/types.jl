@@ -1,86 +1,71 @@
-# src/types.jl
-using StaticArrays
-
-"""
-    TranscriptModel
-
-Immutable struct holding all static parameters of the simulation.
-"""
 struct TranscriptModel
-    L::Int                  # Length of lattice (codons)
-    l_ribosome::Int         # Footprint size (width in codons, e.g., 10)
-    
-    # Rates
-    α::Float64              # Initiation rate (at site 1)
-    β::Float64              # Termination rate (at site L)
-    k_elong::Vector{Float64}# Elongation rates per site (vector of length L)
-    
-    # Pausing Kinetics
-    k_pause::Float64        # Rate Mobile -> Paused (k₋)
-    k_unpause::Float64      # Rate Paused -> Mobile (k₊)
-    delta::Float64          # mRNA degradation rate
+    L::Int
+    l_ribosome::Int
+    α::Float64              # Initiation rate
+    β::Float64              # Termination rate
+    k_elong::Vector{Float64}
+    k_pause::Float64
+    k_unpause::Float64
+    delta::Float64          # Degradation rate
 end
 
-"""
-    SimState
-
-Mutable struct holding the changing state of the simulation.
-Designed for zero-allocation updates.
-"""
 mutable struct SimState
     time::Float64
     step_count::Int
     
-    # Lattice: 0 = empty, 1 = ribosome head position. 
-    # The ribosome body occupies [i, i + l - 1].
+    # Lattice & State
     lattice::Vector{Int} 
+    internal_states::Vector{UInt8} # 1=Active, 2=Paused
     
-    # Internal State: 0 = None, 1 = Mobile, 2 = Paused
-    internal_states::Vector{UInt8} 
-    
-    # Propensities (Rates)
-    # rate_elong[i]: Rate of particle at i moving to i+1
+    # Propensities
     rate_elong::Vector{Float64}
-    
-    # Initiation rate (fixed)
-    rate_initiation::Float64   # Rate of initiation at site 1
-
-    # rate_switch[i]: Rate of particle at i switching state (Mobile <-> Paused)
+    rate_initiation::Float64
     rate_switch::Vector{Float64}
-    
-    # Total Propensities (Sums maintained incrementally)
     total_rate_elong::Float64
     total_rate_switch::Float64
     
-    # Observables / Counters
-    flux_termination::Int
-    count_active::Int
-    count_paused::Int
-
-    #Observables (Time-averaged Integrals)
-    cum_active_time::Float64
-    cum_paused_time::Float64
-    cum_moving_masses::Float64
+    # --- PARTICLE COUNTERS (Snapshots) ---
+    count_active::Int  # Total State 1 (Mobile + Jammed)
+    count_paused::Int  # Total State 2
+    count_mobile::Int  # Subset of Active with rate > 0 (The rest are Jammed)
+    
+    # --- OBSERVABLES (Time-Averaged) ---
+    flux_termination::Int # Total Flux
+    
+    # 1. Particle Type Integrals (For Microscopic Density)
+    cum_active_time::Float64   # Integral of N_active
+    cum_paused_time::Float64   # Integral of N_paused
+    cum_mobile_time::Float64   # Integral of N_mobile
+    
+    # 2. System State Integrals (For Macroscopic "Regimes")
+    
+    # Regime A: "Unpaused State" (System has exactly 0 paused particles)
+    cum_time_unpaused::Float64 # How long were we in this state?
+    cum_mass_unpaused::Float64 # Sum of (Total N * dt) while in this state
+    flux_unpaused::Int         # Flux events that happened while in this state
+    
+    # Regime B: "Paused State" (System has >= 1 paused particle)
+    # Time spent here = (Total Time - cum_time_unpaused)
+    cum_mass_paused::Float64   # Sum of (Total N * dt) while in this state
+    flux_paused::Int           # Flux events that happened while in this state
 end
 
-# Helper constructor to initialize state easily
-# Helper constructor to initialize state easily
 function SimState(model::TranscriptModel)
     return SimState(
-        0.0,                    # time
-        0,                      # step_count
-        zeros(Int, model.L),    # lattice
-        zeros(UInt8, model.L),  # internal_states
-        zeros(Float64, model.L),# rate_elong
-        0.0,                    # rate_initiation (FIXED: Added this missing 0.0)
-        zeros(Float64, model.L),# rate_switch
-        0.0,                    # total_rate_elong
-        0.0,                    # total_rate_switch
-        0,                      # flux_termination
-        0,                      # count_mobile
-        0,                       # count_paused
-        0.0,                    # cum_active_time
-        0.0,                    # cum_paused_time
-        0.0                     # cum_moving_masses
+        0.0, 0,
+        zeros(Int, model.L),
+        zeros(UInt8, model.L),
+        zeros(Float64, model.L),
+        0.0,
+        zeros(Float64, model.L),
+        0.0, 0.0,
+        
+        0, 0, 0, # Counts
+        
+        0,       # Total Flux
+        0.0, 0.0, 0.0, # Particle Integrals
+        
+        0.0, 0.0, 0,   # Unpaused System Stats
+        0.0, 0         # Paused System Stats
     )
 end
