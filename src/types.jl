@@ -1,71 +1,97 @@
-struct TranscriptModel
+
+# types for the ribosome model to stop the if statements (multiple Dispatch! :))) )
+abstract type RibosomeState end
+struct EmptySite <: RibosomeState end
+struct Active <: RibosomeState end
+struct Paused <: RibosomeState end
+struct Jammed <: RibosomeState end
+
+struct TranscriptModel{T<:Real,V<:AbstractVector{T}}
     L::Int
     l_ribosome::Int
-    α::Float64              # Initiation rate
-    β::Float64              # Termination rate
-    k_elong::Vector{Float64}
-    k_pause::Float64
-    k_unpause::Float64
-    delta::Float64          # Degradation rate
+    α::T              # Initiation rate
+    β::T              # Termination rate
+    k_elong::V
+    k_pause::T
+    k_unpause::T
+    delta::T          # Degradation rate
 end
 
-mutable struct SimState
-    time::Float64
+# This constructors makes sure that the compiler specifies the types because T could be many as T is Real
+function TranscriptModel(L, l_rib, α, β, k_elong, k_pause, k_unpause, delta)
+    # Promote all scalar inputs to the same type T (usually Float64)
+    T = promote_type(typeof(α), typeof(β), eltype(k_elong), typeof(delta))
+    # Convert fields to T
+    return TranscriptModel{T,Vector{T}}(
+        L,
+        l_rib,
+        T(α),
+        T(β),
+        Vector{T}(k_elong),
+        T(k_pause),
+        T(k_unpause),
+        T(delta),
+    )
+end
+
+mutable struct SimState{T<:Real}
+    time::T
     step_count::Int
-    
-    # Lattice & State
-    lattice::Vector{Int} 
-    internal_states::Vector{UInt8} # 1=Active, 2=Paused
-    
-    # Propensities
-    rate_elong::Vector{Float64}
-    rate_initiation::Float64
-    rate_switch::Vector{Float64}
-    total_rate_elong::Float64
-    total_rate_switch::Float64
-    
-    # --- PARTICLE COUNTERS (Snapshots) ---
-    count_active::Int  # Total State 1 (Mobile + Jammed)
-    count_paused::Int  # Total State 2
-    count_mobile::Int  # Subset of Active with rate > 0 (The rest are Jammed)
-    
-    # --- OBSERVABLES (Time-Averaged) ---
-    flux_termination::Int # Total Flux
-    
-    # 1. Particle Type Integrals (For Microscopic Density)
-    cum_active_time::Float64   # Integral of N_active
-    cum_paused_time::Float64   # Integral of N_paused
-    cum_mobile_time::Float64   # Integral of N_mobile
-    
-    # 2. System State Integrals (For Macroscopic "Regimes")
-    
-    # Regime A: "Unpaused State" (System has exactly 0 paused particles)
-    cum_time_unpaused::Float64 # How long were we in this state?
-    cum_mass_unpaused::Float64 # Sum of (Total N * dt) while in this state
-    flux_unpaused::Int         # Flux events that happened while in this state
-    
-    # Regime B: "Paused State" (System has >= 1 paused particle)
-    # Time spent here = (Total Time - cum_time_unpaused)
-    cum_mass_paused::Float64   # Sum of (Total N * dt) while in this state
-    flux_paused::Int           # Flux events that happened while in this state
+
+    lattice::Vector{Int}
+    internal_states::Vector{UInt8} # 0=Empty, 1=Active, 2=Paused
+
+    rate_elong::Vector{T}
+    rate_initiation::T
+    rate_switch::Vector{T}
+
+    total_rate_elong::T
+    total_rate_switch::T
+
+    # count active paused and mobile ribosomes
+    count_active::Int
+    count_paused::Int
+    count_mobile::Int
+
+    flux_termination::Int
+
+    # how much active time the systems spends in the state
+    cum_active_time::T
+    cum_paused_time::T
+    cum_mobile_time::T
+
+    # how much time and mass the system transported in the unpaused and paused states
+    cum_time_unpaused::T
+    cum_mass_unpaused::T
+    flux_unpaused::Int
+
+    cum_mass_paused::T
+    flux_paused::Int
 end
 
-function SimState(model::TranscriptModel)
-    return SimState(
-        0.0, 0,
+
+function SimState(model::TranscriptModel{T}) where {T}
+    return SimState{T}(
+        zero(T),
+        0,
         zeros(Int, model.L),
         zeros(UInt8, model.L),
-        zeros(Float64, model.L),
-        0.0,
-        zeros(Float64, model.L),
-        0.0, 0.0,
-        
-        0, 0, 0, # Counts
-        
-        0,       # Total Flux
-        0.0, 0.0, 0.0, # Particle Integrals
-        
-        0.0, 0.0, 0,   # Unpaused System Stats
-        0.0, 0         # Paused System Stats
+        zeros(T, model.L),
+        zero(T),
+        zeros(T, model.L),
+        zero(T),
+        zero(T),
+        0,
+        0,
+        0,
+        0,
+        zero(T),
+        zero(T),
+        zero(T),
+        zero(T),
+        zero(T),
+        0,
+        zero(T),
+        0,
     )
 end

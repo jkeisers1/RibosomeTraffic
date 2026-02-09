@@ -4,6 +4,7 @@ module RibosomeTraffic
 using StaticArrays
 using Distributions
 using JumpProcesses
+using Accessors
 using Random
 
 # --- Exported Interface ---
@@ -12,7 +13,7 @@ export TranscriptModel, SimState      # From types.jl
 export step!, run_custom_simulation   # From solver_custom.jl
 export build_jump_problem             # From solver_jump.jl
 export plot_kymograph                 # From utils.jl
-
+export make_jump_problem, run_sciml_simulation # <--- Add this
 # --- Include Sub-Modules ---
 # The order matters! Types must be loaded first.
 

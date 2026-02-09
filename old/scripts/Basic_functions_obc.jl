@@ -4,14 +4,14 @@
 #using Distributed
 #using BenchmarkTools
 
-function create_lattice_l(L::Int64, l_ribosome::Int64) 
+function create_lattice_l(L::Int64, l_ribosome::Int64)
 
     #init_region = zeros(Int64, l_ribosome+1)
     # lattice = zeros(Int64, L)
     #lattice = zeros(Int64, L-2*l_ribosome)
 
     #end_region = zeros(Int64, l_ribosome)
-    
+
     #lattice = vcat(init_region, lattice, end_region)
 
     return zeros(Int64, L+1)
@@ -24,19 +24,19 @@ end
 #         index = findfirst(x -> x == 0, lattice)
 #         lattice[index] += 1
 #     end
-    
+
 #     shuffle!(lattice)
 #     lattice[1] = 0
 #     return lattice
 # end
 function create_rates_l(init, term, elong, L)  #strength of bottleneck is set to uniform rate by default
-       
+
     #rates = zeros(1+l_ribosome+L) .+ elong # for checking
     rates = zeros(1+L) .+ elong
-    rates[1]= init   #setting initation rate to α at site 1
-    
+    rates[1] = init   #setting initation rate to α at site 1
+
     rates[end] = term #setting termination rate to β at site L+1
-    
+
     return rates
 end
 
@@ -56,8 +56,8 @@ end
 
 function positionRibosomes(lattice)::Vector{Int64}
     position = []
-    for j in 1:length(lattice)
-        if lattice[j] == 1 
+    for j = 1:length(lattice)
+        if lattice[j] == 1
             push!(position, j)
         else
             push!(position, 0)
@@ -78,18 +78,18 @@ end
 
 function create_log10_range_list(starting_point, stopping_point, step_expo)
     list = []
-    tmp = collect(range(starting_point,stop=stopping_point, step=step_expo))
+    tmp = collect(range(starting_point, stop = stopping_point, step = step_expo))
     for item in tmp
-        push!(list,10^(item))
+        push!(list, 10^(item))
     end
     return list
 end
 
 function create_log2_range_list(starting_point, stopping_point, step_expo)
     list = []
-    tmp = collect(range(starting_point,stop=stopping_point, step=step_expo))
+    tmp = collect(range(starting_point, stop = stopping_point, step = step_expo))
     for item in tmp
-        push!(list,2^(item))
+        push!(list, 2^(item))
     end
     return list
 end

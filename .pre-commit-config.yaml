@@ -1,0 +1,16 @@
+# .pre-commit-config.yaml
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+    -   id: check-added-large-files
+        args: ['--maxkb=500'] # Prevents accidentally committing huge CSVs!
+
+-   repo: https://github.com/domluna/JuliaFormatter.jl
+    rev: v1.0.45
+    hooks:
+    -   id: julia-formatter
+        # This will automatically format your .jl files to standard style

@@ -47,7 +47,7 @@ avg_N_moving = state.cum_moving_masses / state.time # Effectively "N_free"
 avg_N_jammed = avg_N_active - avg_N_moving
 
 # B. Average Densities (ρ = N / L)
-rho_total  = (avg_N_active + avg_N_paused) / L
+rho_total = (avg_N_active + avg_N_paused) / L
 rho_active = avg_N_active / L
 rho_paused = avg_N_paused / L
 rho_jammed = avg_N_jammed / L
@@ -63,7 +63,7 @@ println("\n--- Results (Time-Averaged) ---")
 @printf "Total Steps:      %d\n" state.step_count
 @printf "Flux (J):         %.4f ribosomes/sec\n" J
 println("--------------------------------")
-@printf "Total Density:    %.4f /codon \n" rho_total 
+@printf "Total Density:    %.4f /codon \n" rho_total
 println("  ├─ Active:      $(round(rho_active, digits=4))")
 println("  │   ├─ Moving:  $(round(avg_N_moving / L, digits=4))")
 println("  │   └─ Jammed:  $(round(rho_jammed, digits=4))")

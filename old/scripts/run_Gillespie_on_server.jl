@@ -30,7 +30,7 @@ L, l_ribosome, track_site = 250, 1, 1
 init, term, elong = 1, 1, 1
 deg_t = deg_g = 0
 k₋ = 0.0001
-k₊ = 0.00001 
+k₊ = 0.00001
 
 #α_crit = α_crit_hat_fct(k₋, k₊, elong, ρ_max_fct(k₋, k₊, 1))
 α_list = 10 .^ collect(-6:0.25:0)
@@ -42,9 +42,23 @@ x = 1
 run_time, starting_t, delta_t = 4 * 10^x, 1*10^x, 3*10^x
 
 
-function make_phase_diagram(L, l_ribosome, track_site, deg_t, deg_g, α_list, β_list, elong, k₋, k₊, run_time, starting_t, delta_t)
-    
-    phase_diagram_current = Matrix{Any}(undef,length(α_list), length(β_list))
+function make_phase_diagram(
+    L,
+    l_ribosome,
+    track_site,
+    deg_t,
+    deg_g,
+    α_list,
+    β_list,
+    elong,
+    k₋,
+    k₊,
+    run_time,
+    starting_t,
+    delta_t,
+)
+
+    phase_diagram_current = Matrix{Any}(undef, length(α_list), length(β_list))
     phase_diagram_density = Matrix{Any}(undef, length(α_list), length(β_list))
     phase_diagram_paused_distr = Matrix{Any}(undef, length(α_list), length(β_list))
     phase_diagram_number_distr = Matrix{Any}(undef, length(α_list), length(β_list))
@@ -59,34 +73,78 @@ function make_phase_diagram(L, l_ribosome, track_site, deg_t, deg_g, α_list, β
         #    run_time /= 2
         #    starting_t /= 2
         #    delta_t /= 2
-        #end 
+        #end
 
         results = pmap(
-            β -> Gillespie_obc(L, l_ribosome, track_site, deg_t, deg_g, init, β, elong, k₋, k₊, run_time, starting_t, delta_t; kymo=false),
-            β_list)
+            β -> Gillespie_obc(
+                L,
+                l_ribosome,
+                track_site,
+                deg_t,
+                deg_g,
+                init,
+                β,
+                elong,
+                k₋,
+                k₊,
+                run_time,
+                starting_t,
+                delta_t;
+                kymo = false,
+            ),
+            β_list,
+        )
 
-        i += 1    
+        i += 1
         for (index, result) in enumerate(results)
 
-            phase_diagram_current[i,index] = result[1]
-            phase_diagram_density[i,index] = result[2]
+            phase_diagram_current[i, index] = result[1]
+            phase_diagram_density[i, index] = result[2]
             #phase_diagram_paused_distr[i,index] = result[3]
             #phase_diagram_number_distr[i,index] = result[4]
             #phase_diagram_length_distr[i,index] = result[6]
-            phase_diagram_time[i,index] = result[3]
-        end 
+            phase_diagram_time[i, index] = result[3]
+        end
 
     end
     #return phase_diagram_current, phase_diagram_density, phase_diagram_paused_distr, phase_diagram_number_distr, phase_diagram_length_distr, phase_diagram_time
     return phase_diagram_current, phase_diagram_density, phase_diagram_time
 end
 
-@time PD_current, PD_density,  PD_time = make_phase_diagram(L, l_ribosome, track_site, deg_t, deg_g, α_list[1:2], β_list[1:2], elong, k₋, k₊, run_time, starting_t, delta_t)
+@time PD_current, PD_density, PD_time = make_phase_diagram(
+    L,
+    l_ribosome,
+    track_site,
+    deg_t,
+    deg_g,
+    α_list[1:2],
+    β_list[1:2],
+    elong,
+    k₋,
+    k₊,
+    run_time,
+    starting_t,
+    delta_t,
+)
 
 x = 4
-run_time, starting_t, delta_t = 12 *10^x, 4*10^x, 8*10^x 
+run_time, starting_t, delta_t = 12 * 10^x, 4*10^x, 8*10^x
 
-@time PD_current, PD_density, PD_time = make_phase_diagram(L, l_ribosome, track_site, deg_t, deg_g, α_list, β_list, elong, k₋, k₊, run_time, starting_t, delta_t)
+@time PD_current, PD_density, PD_time = make_phase_diagram(
+    L,
+    l_ribosome,
+    track_site,
+    deg_t,
+    deg_g,
+    α_list,
+    β_list,
+    elong,
+    k₋,
+    k₊,
+    run_time,
+    starting_t,
+    delta_t,
+)
 
 
 

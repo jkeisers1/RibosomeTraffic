@@ -10,24 +10,26 @@ using BenchmarkTools
 println("--- Initializing Model ---")
 
 L = 1000             # Length of transcript
-l_ribosome = 10      # Ribosome footprint
-α = 0.6              # Initiation rate
+l_ribosome = 1      # Ribosome footprint
+α = 0.2              # Initiation rate
 β = 1.0              # Termination rate
 
 # Create a heterogeneous elongation profile
 k_elong = ones(L)
 
+
 k_pause = 0.001      # Small pause rate to test the stats
 k_unpause = 0.1      # Recovery rate
 lifetime_mRNA = 300.0
 delta = 1.0 / lifetime_mRNA
+#delta = 0.0
 
 model = TranscriptModel(L, l_ribosome, α, β, k_elong, k_pause, k_unpause, delta)
 
 # ==========================================
 # 2. SIMULATION
 # ==========================================
-t_bench = 100.0
+t_bench = 100_000.0
 println("--- Running Simulation (t_max = $t_bench s) ---")
 
 @time state = run_custom_simulation(model, t_bench)
@@ -43,7 +45,7 @@ avg_N_paused = state.cum_paused_time / state.time
 avg_N_mobile = state.cum_mobile_time / state.time
 avg_N_jammed = avg_N_active - avg_N_mobile
 
-rho_total  = (avg_N_active + avg_N_paused) / L
+rho_total = (avg_N_active + avg_N_paused) / L
 rho_active = avg_N_active / L
 rho_paused = avg_N_paused / L
 rho_mobile = avg_N_mobile / L
@@ -56,16 +58,16 @@ J_total = state.flux_termination / state.time
 
 # 1. Time Split
 time_unpaused = state.cum_time_unpaused
-time_paused   = state.time - state.cum_time_unpaused
+time_paused = state.time - state.cum_time_unpaused
 frac_unpaused = time_unpaused / state.time
 
 # 2. Flux Split (Avoid division by zero)
 J_unpaused = (time_unpaused > 0) ? (state.flux_unpaused / time_unpaused) : 0.0
-J_paused   = (time_paused > 0)   ? (state.flux_paused / time_paused) : 0.0
+J_paused = (time_paused > 0) ? (state.flux_paused / time_paused) : 0.0
 
 # 3. Density Split (Total density in that state)
 rho_sys_unpaused = (time_unpaused > 0) ? (state.cum_mass_unpaused / time_unpaused / L) : 0.0
-rho_sys_paused   = (time_paused > 0)   ? (state.cum_mass_paused / time_paused / L) : 0.0
+rho_sys_paused = (time_paused > 0) ? (state.cum_mass_paused / time_paused / L) : 0.0
 
 # ==========================================
 # 4. REPORT
