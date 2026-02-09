@@ -24,7 +24,4 @@ include("types.jl")
 include("solver_custom.jl") # Your high-perf custom loop
 include("solver_jump.jl")   # The SciML integration
 
-# 3. Load Utilities (Analysis/Plotting helpers)
-include("utils.jl")
-
 end # module

@@ -162,7 +162,7 @@ function switch_ribosome_state!(state::SimState, model::TranscriptModel, i::Int)
 end
 
 # --- 3. Main Loop (Splitting Density) ---
-function step!(state::SimState, model::TranscriptModel)
+function gillespie_step!(state::SimState, model::TranscriptModel)
     a0 =
         state.rate_initiation +
         state.total_rate_elong +
@@ -262,7 +262,7 @@ function run_custom_simulation(model::TranscriptModel, t_max::Float64)
     state = SimState(model)
     update_initiation_rate!(state, model)
     while state.time < t_max
-        step!(state, model)
+        gillespie_step!(state, model)
     end
     return state
 end
