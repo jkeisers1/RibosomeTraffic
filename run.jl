@@ -18,8 +18,8 @@ l_ribosome = 1      # Ribosome footprint
 k_elong = ones(L)
 
 
-k_pause = 0.001      # Small pause rate to test the stats
-k_unpause = 0.1      # Recovery rate
+k_pause = 0.0001      # Small pause rate to test the stats
+k_unpause = 0.001      # Recovery rate
 lifetime_mRNA = 300.0
 delta = 1.0 / lifetime_mRNA
 #delta = 0.0
@@ -32,7 +32,7 @@ model = TranscriptModel(L, l_ribosome, α, β, k_elong, k_pause, k_unpause, delt
 t_bench = 100_000.0
 println("--- Running Simulation (t_max = $t_bench s) ---")
 
-@time state = run_custom_simulation(model, t_bench)
+@time state = run_custom_experiment(model, t_bench)
 
 # ==========================================
 # 3. ANALYSIS

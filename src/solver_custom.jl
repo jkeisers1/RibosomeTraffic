@@ -110,7 +110,6 @@ function update_initiation_rate!(state::SimState{T}, model::TranscriptModel{T}) 
     state.rate_initiation = is_blocked ? zero(T) : model.α
 end
 
-
 # --- 2. Events (Splitting Flux) ---
 function move_ribosome!(state::SimState, model::TranscriptModel, i::Int)
     state.lattice[i] = 0
@@ -258,11 +257,80 @@ function gillespie_step!(state::SimState, model::TranscriptModel)
     end
 end
 
-function run_custom_simulation(model::TranscriptModel, t_max::Float64)
+"""
+warmup!(state, model; window = 100.0, tolerance = 0.01)
+Runs the simulation until the ribosome count stabilizes. Gives the time to reach steady state
+"""
+function warmup!(
+    state::SimState,
+    model::TranscriptModel;
+    max_steps = 100_000,
+    check_interval = 100,
+    window_size = 20,
+)
+    history_total = Float64[] # just the total particle count
+    history_active = Float64[] # just the active particle count
+    history_paused = Float64[] # just the paused particle count
+
+    min_history = 2 * window_size
+    for s = 1:max_steps
+        gillespie_step!(state, model)
+        if s % check_interval == 0
+            push!(history_total, Float64(state.count_active + state.count_paused))
+            push!(history_active, Float64(state.count_active))
+            push!(history_paused, Float64(state.count_paused))
+
+            if length(history_total) >= min_history
+                # Helper to check stability of a specific history
+                is_stable(h) = begin
+                    recent = mean(@view h[(end-window_size+1):end])
+                    prev = mean(@view h[(end-2*window_size+1):(end-window_size)])
+                    return abs(recent - prev) < 0.01 * (recent + 1e-6)
+                end
+
+                # ALL three must be stable
+                if is_stable(history_total) &&
+                   is_stable(history_active) &&
+                   is_stable(history_paused)
+                    avg_total = round(mean(history_total[(end-4):end]), digits = 2) + 1e-9
+                    act_paused_ratio = round(
+                        mean(history_active[(end-4):end])/mean(history_paused[(end-4):end]),
+                        digits = 2,
+                    )
+                    @info "Full Steady State reached at step $s"
+                    @info "  ├─ Avg Total:  $avg_total"
+                    @info "  └─ Active/Paused Ratio: $act_paused_ratio"
+                    return true
+                end
+            end
+        end
+    end
+    @warn "Steady state not reached."
+    return false
+end
+
+function run_custom_experiment(model::TranscriptModel, t_production::Float64)
+    # 1. Initialize
     state = SimState(model)
     update_initiation_rate!(state, model)
-    while state.time < t_max
+
+    # 2. Warm up (Equilibrate the system)
+    # This drives the system until the 'traffic' is steady
+    success = warmup!(state, model)
+
+    if !success
+        @warn "System did not reach steady state, data might be biased."
+    end
+
+    # 3. RESET production counters
+    # We want to measure the protein flux ONLY from the steady state
+    reset_statistics!(state)
+    # (Reset any other 'cum_' variables you care about here)
+
+    # 4. Production Run
+    while state.time < t_production
         gillespie_step!(state, model)
     end
+
     return state
 end

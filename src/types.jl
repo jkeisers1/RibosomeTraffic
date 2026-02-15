@@ -95,3 +95,23 @@ function SimState(model::TranscriptModel{T}) where {T}
         0,
     )
 end
+
+function reset_statistics!(state::SimState{T}) where {T}
+    state.time = zero(T)
+    state.step_count = 0
+
+    # Reset all counters
+    state.flux_termination = 0
+    state.flux_unpaused = 0
+    state.flux_paused = 0
+
+    # Reset all integrals
+    state.cum_active_time = zero(T)
+    state.cum_paused_time = zero(T)
+    state.cum_mobile_time = zero(T)
+    state.cum_time_unpaused = zero(T)
+    state.cum_mass_unpaused = zero(T)
+    state.cum_mass_paused = zero(T)
+
+    @info "Statistics reset. Ready for production run."
+end

@@ -10,7 +10,7 @@ using Random
 # --- Exported Interface ---
 # These are the functions users (and you) will call:
 export TranscriptModel, SimState      # From types.jl
-export step!, run_custom_simulation   # From solver_custom.jl
+export step!, run_custom_experiment   # From solver_custom.jl
 export build_jump_problem             # From solver_jump.jl
 export plot_kymograph                 # From utils.jl
 export make_jump_problem, run_sciml_simulation # <--- Add this

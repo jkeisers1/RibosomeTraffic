@@ -21,7 +21,7 @@ end
         model = TranscriptModel(L, 10, alpha_val, 2.0, ones(L), 0.001, 0.1, 0.0033)
 
         # Run Long Simulation
-        state = run_custom_simulation(model, 50000.0)
+        state = run_custom_experiment(model, 50000.0)
 
         # Return a NamedTuple (easy to turn into a DataFrame later)
         return (
